@@ -54,8 +54,8 @@ st.plotly_chart(fig_industry)
 
 # Revenue Over Time
 st.subheader("Revenue Over Time")
-df_filtered['Month'] = df_filtered['Closed_Date'].dt.to_timestamp().dt.strftime('%Y-%m')
-revenue_over_time = df_filtered.groupby('Month')['ARR (£)'].sum().reset_index()
+df_filtered['Month'] = df_filtered['Closed_Date'].dt.strftime('%Y-%m')
+revenue_over_time = df_filtered.groupby('Month', as_index=False)['ARR (£)'].sum()
 fig_revenue_time = px.line(revenue_over_time, x='Month', y='ARR (£)', markers=True)
 st.plotly_chart(fig_revenue_time)
 
