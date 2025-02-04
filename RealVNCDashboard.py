@@ -28,20 +28,16 @@ df_filtered = df[
 
 st.title("RealVNC Revenue Operations Dashboard")
 
-# High-Level Overview Table
+# High-Level Overview Metrics
 st.subheader("High-Level Overview")
-df_overview = pd.DataFrame({
-    "Metric": ["Total Pipeline Value (£)", "Closed Won Revenue (£)", "Win Rate (%)"],
-    "Value": [
-        df_filtered['Deal_Size (£)'].sum(),
-        df_filtered[df_filtered['Deal_Stage'] == 'Closed Won']['ARR (£)'].sum(),
-        (len(df_filtered[df_filtered['Deal_Stage'] == 'Closed Won']) / len(df_filtered) * 100) if len(df_filtered) > 0 else 0
-    ]
-})
-st.table(df_overview)
+col1, col2, col3 = st.columns(3)
+col1.metric("Total Value of Selected Stages (£)", f"{df_filtered['Deal_Size (£)'].sum():,.2f}")
+col2.metric("Closed Won Revenue (£)", f"{df_filtered[df_filtered['Deal_Stage'] == 'Closed Won']['ARR (£)'].sum():,.2f}")
+win_rate = (len(df_filtered[df_filtered['Deal_Stage'] == 'Closed Won']) / len(df_filtered) * 100) if len(df_filtered) > 0 else 0
+col3.metric("Win Rate (%)", f"{win_rate:.2f}%")
 
 # Collapsible Sections
-with st.expander("Revenue Over Time"):
+with st.expander("Deal Stage Value Over Time"):
     df_filtered['Month'] = df_filtered['Closed_Date'].dt.strftime('%Y-%m')
     revenue_over_time = df_filtered.groupby('Month', as_index=False)['ARR (£)'].sum()
     fig_revenue_time = px.line(revenue_over_time, x='Month', y='ARR (£)', markers=True)
