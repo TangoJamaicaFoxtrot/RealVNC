@@ -46,5 +46,11 @@ fig_industry = px.pie(df_filtered, names='Industry', values='Deal_Size (£)')
 st.plotly_chart(fig_industry)
 
 # Display Data
-st.subheader("Sales Data Table")
-st.dataframe(df_filtered)
+st.subheader("Sales Data Summary by Salesperson")
+df_grouped = df_filtered.groupby('Salesperson_Name').agg(
+    Total_Deals=('Opportunity_ID', 'count'),
+    Total_Pipeline_Value=('Deal_Size (£)', 'sum'),
+    Closed_Won_Revenue=('ARR (£)', lambda x: x[df_filtered['Deal_Stage'] == 'Closed Won'].sum()),
+    Average_Deal_Size=('Deal_Size (£)', 'mean')
+).reset_index()
+st.dataframe(df_grouped)
