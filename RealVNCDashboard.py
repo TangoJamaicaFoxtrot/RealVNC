@@ -1,3 +1,41 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+
+# Load Data
+csv_file = "realvnc_sales_data.csv"
+df = pd.read_csv(csv_file)
+
+# Convert Dates
+df['Created_Date'] = pd.to_datetime(df['Created_Date'])
+df['Closed_Date'] = pd.to_datetime(df['Closed_Date'], errors='coerce')
+
+# Sidebar Filters
+st.sidebar.header("Filter Data")
+region_filter = st.sidebar.multiselect("Select Region", df['Region'].unique(), default=df['Region'].unique())
+industry_filter = st.sidebar.multiselect("Select Industry", df['Industry'].unique(), default=df['Industry'].unique())
+deal_stage_filter = st.sidebar.multiselect("Select Deal Stage", df['Deal_Stage'].unique(), default=df['Deal_Stage'].unique())
+plan_filter = st.sidebar.multiselect("Select Plan Type", df['Plan_Type'].unique(), default=df['Plan_Type'].unique())
+
+# Apply Filters
+df_filtered = df[
+    (df['Region'].isin(region_filter)) &
+    (df['Industry'].isin(industry_filter)) &
+    (df['Deal_Stage'].isin(deal_stage_filter)) &
+    (df['Plan_Type'].isin(plan_filter))
+]
+
+st.title("RealVNC Revenue Operations Dashboard")
+
+# High-Level Overview Metrics
+st.subheader("High-Level Overview")
+col1, col2, col3 = st.columns(3)
+col1.metric("Total Value of Selected Stages (£)", f"{df_filtered['Deal_Size (£)'].sum():,.2f}")
+col2.metric("Closed Won Revenue (£)", f"{df_filtered[df_filtered['Deal_Stage'] == 'Closed Won']['ARR (£)'].sum():,.2f}")
+win_rate = (len(df_filtered[df_filtered['Deal_Stage'] == 'Closed Won']) / len(df_filtered) * 100) if len(df_filtered) > 0 else 0
+col3.metric("Win Rate (%)", f"{win_rate:.2f}%")
+
 with st.expander("Deal Stage Value Over Time"):
     df_filtered = df_filtered.dropna(subset=['Closed_Date'])
     df_filtered['Month'] = df_filtered['Closed_Date'].dt.to_period('M').dt.to_timestamp()
