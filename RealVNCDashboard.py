@@ -38,18 +38,36 @@ col3.metric("Win Rate (%)", f"{win_rate:.2f}%")
 
 # Collapsible Sections
 with st.expander("Deal Stage Value Over Time"):
-    df_filtered['Month'] = df_filtered['Closed_Date'].dt.to_period('M').astype(str)
+    # Ensure Closed_Date is valid and remove NaT values
+    df_filtered = df_filtered.dropna(subset=['Closed_Date'])
+    
+    # Convert Month to a proper datetime object for sorting
+    df_filtered['Month'] = df_filtered['Closed_Date'].dt.to_period('M').dt.to_timestamp()
+
+    # Aggregate ARR by Month
     revenue_over_time = df_filtered.groupby('Month', as_index=False)['ARR (£)'].sum()
     revenue_over_time['ARR (£)'] = revenue_over_time['ARR (£)'].round(2)
 
+    # Ensure missing months are displayed (fill in gaps in the timeline)
+    all_months = pd.date_range(start=revenue_over_time['Month'].min(), 
+                               end=revenue_over_time['Month'].max(), freq='MS')
+    revenue_over_time = revenue_over_time.set_index('Month').reindex(all_months, fill_value=0).reset_index()
+    revenue_over_time.rename(columns={'index': 'Month'}, inplace=True)
+
+    # Format Month as "Jan, 2024"
+    revenue_over_time['Month'] = revenue_over_time['Month'].dt.strftime('%b, %Y')
+
+    # Plot the updated graph
     fig_revenue_time = px.line(
         revenue_over_time, x='Month', y='ARR (£)', markers=True,
         labels={"Month": "Month, Year", "ARR (£)": "ARR (£)"},
     )
 
+    # Force chronological order
     fig_revenue_time.update_xaxes(
-        type='category',
-        categoryorder='category ascending'  # Ensures chronological order
+        type='category', 
+        categoryorder='array', 
+        categoryarray=revenue_over_time['Month']
     )
 
     st.plotly_chart(fig_revenue_time)
