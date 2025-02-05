@@ -38,15 +38,22 @@ col3.metric("Win Rate (%)", f"{win_rate:.2f}%")
 
 # Collapsible Sections
 with st.expander("Deal Stage Value Over Time"):
-    df_filtered['Month'] = df_filtered['Closed_Date'].dt.strftime('%b, %Y')
+    df_filtered['Month'] = df_filtered['Closed_Date'].dt.to_period('M').astype(str)
     revenue_over_time = df_filtered.groupby('Month', as_index=False)['ARR (£)'].sum()
     revenue_over_time['ARR (£)'] = revenue_over_time['ARR (£)'].round(2)
+
     fig_revenue_time = px.line(
         revenue_over_time, x='Month', y='ARR (£)', markers=True,
         labels={"Month": "Month, Year", "ARR (£)": "ARR (£)"},
     )
-    fig_revenue_time.update_xaxes(type='category')  # Ensures all months are displayed
+
+    fig_revenue_time.update_xaxes(
+        type='category',
+        categoryorder='category ascending'  # Ensures chronological order
+    )
+
     st.plotly_chart(fig_revenue_time)
+
 
 with st.expander("Sales by Industry"):
     fig_industry = px.pie(df_filtered, names='Industry', values='Deal_Size (£)')
